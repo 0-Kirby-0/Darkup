@@ -4,4 +4,5 @@ fn main() {
 }
 
 mod defaults;
+mod linebreaks;
 mod settings;

@@ -1,4 +1,4 @@
-use crate::settings;
+use crate::{linebreaks, settings};
 
 #[derive(PartialEq)]
 pub enum SettingType {
@@ -47,14 +47,125 @@ pub fn setting_list() -> settings::SettingList<SettingType> {
     }
 }
 
-pub fn example_text() -> String {
-    r"Example Heading (with clarifier)
-Subheading: With some text
+pub fn ruleset() -> Vec<linebreaks::Rule> {
+    use linebreaks::Case as C;
+    use linebreaks::Match as M;
+    use linebreaks::PunctuationKind as P;
+    use linebreaks::Rule as R;
+    use linebreaks::Substitute as Sub;
+    use SettingType as S;
 
-Cömplícated Häding (with diacritics øóúé)
-Regular text with
-shitty line bre-
-aks but also Proper-
-Nouns."
-        .to_owned()
+    let hypen = '-';
+    let dash = '—';
+
+    vec![
+        //Taking care of the most common and obvious spurious linebreaks.
+        //
+        R {
+            //Text⏎and more text
+            setting: None,
+            previous: M::Letter(C::Lowercase),
+            following: M::Letter(C::Any),
+            substitutions: [Sub::Leave, Sub::Replace(" ".to_string()), Sub::Leave],
+        },
+        R {
+            //Text,⏎and more text
+            setting: None,
+            previous: M::Punctuation(P::Continuation),
+            following: M::Letter(C::Any),
+            substitutions: [Sub::Leave, Sub::Replace(" ".to_string()), Sub::Leave],
+        },
+        R {
+            //Text.⏎More text
+            setting: None,
+            previous: M::Punctuation(P::EndOfSentence),
+            following: M::Letter(C::Uppercase),
+            substitutions: [Sub::Leave, Sub::Leave, Sub::Leave],
+        },
+        //Removing unnecessary hyphens
+        //
+        R {
+            //Text with conti-⏎nuation
+            setting: None,
+            previous: M::Punctuation(P::Hyphen),
+            following: M::Letter(C::Lowercase),
+            substitutions: [Sub::Remove, Sub::Remove, Sub::Leave],
+        },
+        R {
+            //Text with Proper-⏎Noun
+            setting: Some((S::SmartHyphenRemoval, true)),
+            previous: M::Punctuation(P::Hyphen),
+            following: M::Letter(C::Uppercase),
+            substitutions: [Sub::Leave, Sub::Remove, Sub::Leave],
+        },
+        R {
+            //Text with Proper-⏎Noun
+            setting: Some((S::SmartHyphenRemoval, false)),
+            previous: M::Punctuation(P::Hyphen),
+            following: M::Letter(C::Uppercase),
+            substitutions: [Sub::Remove, Sub::Remove, Sub::Leave],
+        },
+        //Dealing with unusual structures falling on linebreaks
+        //
+        R {
+            // This/That/⏎TheOther
+            setting: None,
+            previous: M::Punctuation(P::Slash),
+            following: M::Letter(C::Any),
+            substitutions: [Sub::Leave, Sub::Remove, Sub::Leave],
+        },
+        R {
+            // Text (paranthetical)⏎and more text
+            setting: None,
+            previous: M::Punctuation(P::Parantheses),
+            following: M::Letter(C::Any),
+            substitutions: [Sub::Leave, Sub::Replace(" ".to_string()), Sub::Leave],
+        },
+        R {
+            // Text⏎(paranthetical) and more text
+            setting: None,
+            previous: M::Letter(C::Any),
+            following: M::Punctuation(P::Parantheses),
+            substitutions: [Sub::Leave, Sub::Replace(" ".to_string()), Sub::Leave],
+        },
+        R {
+            // Text — paranthetical —⏎and more text
+            setting: None,
+            previous: M::Punctuation(P::Dash),
+            following: M::Letter(C::Any),
+            substitutions: [Sub::Leave, Sub::Replace(" ".to_string()), Sub::Leave],
+        },
+        R {
+            // Text⏎— paranthetical — and more text
+            setting: None,
+            previous: M::Letter(C::Any),
+            following: M::Punctuation(P::Dash),
+            substitutions: [Sub::Leave, Sub::Replace(" ".to_string()), Sub::Leave],
+        },
+        R {
+            // Quote.⏎— Author
+            setting: None,
+            previous: M::Punctuation(P::EndOfSentence),
+            following: M::Punctuation(P::Dash),
+            substitutions: [Sub::Leave, Sub::Leave, Sub::Replace("-".to_string())],
+        },
+        // Miscellaneous replacements
+        //
+        R {
+            // Section.⏎•Bulletpoint
+            setting: None,
+            previous: M::Punctuation(P::Any),
+            following: M::Exact('•'),
+            substitutions: [Sub::Leave, Sub::Replace("\n-".to_string()), Sub::Remove],
+        },
+        R {
+            // Marker symbol used to stop a linebreak from being removed erroniously.
+            // '꠷' (North Indic Placeholder Mark) is used for its apt name and low
+            // probability of being found in the source text.
+            setting: None,
+            previous: M::Exact('꠷'),
+            following: M::Any,
+            substitutions: [Sub::Remove, Sub::Leave, Sub::Leave],
+        },
+    ]
 }
