@@ -23,6 +23,7 @@ where
     }
 }
 
+
 pub struct SettingList<SettingType> {
     pub list: Vec<Setting<SettingType>>,
 }

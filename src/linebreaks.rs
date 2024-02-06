@@ -1,14 +1,16 @@
+use eframe::egui::style::Spacing;
+
 use crate::defaults;
 use crate::settings;
 
 pub enum Case {
     Lowercase,
     Uppercase,
-    Any,
+    Anycase,
 }
 
 pub enum PunctuationKind {
-    Any,
+    AnyPunctuation,
     EndOfSentence,
     Continuation,
     Parantheses,
@@ -18,7 +20,7 @@ pub enum PunctuationKind {
 }
 
 pub enum Match {
-    Any,
+    Anymatch,
     Exact(char),
     Letter(Case),
     Whitespace,
@@ -32,17 +34,17 @@ impl Match {
         use Match as M;
         use PunctuationKind as P;
         match self {
-            M::Any => true,
+            M::Anymatch => true,
             M::Exact(exact) => candidate == *exact,
             M::Letter(case) => match case {
                 C::Uppercase => candidate.is_uppercase(),
                 C::Lowercase => candidate.is_lowercase(),
-                C::Any => candidate.is_alphabetic(),
+                C::Anycase => candidate.is_alphabetic(),
             },
             M::Whitespace => candidate.is_whitespace(),
             M::Linebreak => candidate == '\n',
             M::Punctuation(punctuation) => match punctuation {
-                P::Any => candidate.is_ascii_punctuation(),
+                P::AnyPunctuation => candidate.is_ascii_punctuation(),
                 P::EndOfSentence => matches!(candidate, '.' | '!' | '?'),
                 P::Continuation => matches!(candidate, ',' | ':' | ';'),
                 P::Parantheses => matches!(candidate, '(' | ')' | '[' | ']'),
@@ -53,40 +55,62 @@ impl Match {
         }
     }
 }
-pub enum Substitute {
-    Replace(String),
+
+#[derive(PartialEq)]
+pub enum Action {
     Remove,
     Leave,
 }
 
-impl Substitute {
-    fn apply(&self, candidate: char) -> String {
+pub struct SymbolPredicate {
+    pub symbol: Match,
+    pub on_match: Action,
+}
+
+impl SymbolPredicate {
+    pub fn new(symbol: Match, on_match: Action) -> Self {
+        Self { symbol, on_match }
+    }
+}
+
+pub enum Filler {
+    None,
+    Space,
+    Linebreak,
+    Exact(String),
+}
+
+impl Filler {
+    fn get(&self) -> &str {
+        use Filler as F;
         match self {
-            Self::Replace(replacement) => replacement.clone(),
-            Self::Remove => String::new(),
-            Self::Leave => candidate.to_string(),
+            F::None => "",
+            F::Space => " ",
+            F::Linebreak => "\n",
+            F::Exact(filler) => filler,
         }
     }
 }
 
 pub struct Rule {
     pub setting: Option<(defaults::SettingType, bool)>,
-    pub previous: Match,
-    pub following: Match,
-
-    pub substitutions: [Substitute; 3],
+    pub previous: SymbolPredicate,
+    pub following: SymbolPredicate,
+    pub filler: Filler,
 }
 
 impl Rule {
-    fn apply(&self, previous: char, following: char) -> Option<String> {
-        if self.previous.matches(previous) && self.following.matches(following) {
-            Some(
-                self.substitutions[0].apply(previous)
-                    + &self.substitutions[1].apply('\n')
-                    + &self.substitutions[2].apply(following),
-            )
-        } else {
-            None
+    pub fn matches(&self, previous: char, following: char) -> bool {
+        self.previous.symbol.matches(previous) && self.following.symbol.matches(following)
+    }
+    pub fn merge(&self, mut left: String, mut right: &str) -> String {
+        if self.previous.on_match == Action::Remove {
+            left.pop();
         }
+        if self.following.on_match == Action::Remove {
+            right = &right[1..]
+        }
+
+        left + self.filler.get() + right
     }
 }
