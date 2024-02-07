@@ -54,7 +54,7 @@ pub fn ruleset() -> Vec<linebreaks::Rule> {
     use LB::Case::*;
     use LB::Filler;
     use LB::Match::*;
-    use LB::PunctuationKind as P;
+    use LB::PunctuationKind::*;
     use LB::Rule as R;
     use LB::SymbolPredicate as SP;
 
@@ -71,14 +71,14 @@ pub fn ruleset() -> Vec<linebreaks::Rule> {
         R {
             // Text,⏎and more text
             setting: None,
-            previous: SP::new(Punctuation(P::Continuation), Leave),
+            previous: SP::new(Punctuation(Continuation), Leave),
             following: SP::new(Letter(Anycase), Leave),
             filler: Filler::Space,
         },
         R {
             // Text.⏎More text
             setting: None,
-            previous: SP::new(Punctuation(P::EndOfSentence), Leave),
+            previous: SP::new(Punctuation(EndOfSentence), Leave),
             following: SP::new(Letter(Uppercase), Leave),
             filler: Filler::Linebreak,
         },
@@ -87,21 +87,21 @@ pub fn ruleset() -> Vec<linebreaks::Rule> {
         R {
             // Text with conti-⏎nuation
             setting: None,
-            previous: SP::new(Punctuation(P::Hyphen), Remove),
+            previous: SP::new(Punctuation(Hyphen), Remove),
             following: SP::new(Letter(Lowercase), Leave),
             filler: Filler::None,
         },
         R {
             // Text with Proper-⏎Noun
             setting: Some((S::SmartHyphenRemoval, true)),
-            previous: SP::new(Punctuation(P::Hyphen), Leave),
+            previous: SP::new(Punctuation(Hyphen), Leave),
             following: SP::new(Letter(Uppercase), Leave),
             filler: Filler::None,
         },
         R {
             // Text with Proper-⏎Noun
             setting: Some((S::SmartHyphenRemoval, false)),
-            previous: SP::new(Punctuation(P::Hyphen), Remove),
+            previous: SP::new(Punctuation(Hyphen), Remove),
             following: SP::new(Letter(Uppercase), Leave),
             filler: Filler::None,
         },
@@ -110,14 +110,14 @@ pub fn ruleset() -> Vec<linebreaks::Rule> {
         R {
             // This/That/⏎TheOther
             setting: None,
-            previous: SP::new(Punctuation(P::Slash), Leave),
+            previous: SP::new(Punctuation(Slash), Leave),
             following: SP::new(Letter(Anycase), Leave),
             filler: Filler::None,
         },
         R {
             // Text (paranthetical)⏎and more text
             setting: None,
-            previous: SP::new(Punctuation(P::Parantheses), Leave),
+            previous: SP::new(Punctuation(Parantheses), Leave),
             following: SP::new(Letter(Anycase), Leave),
             filler: Filler::Space,
         },
@@ -125,13 +125,13 @@ pub fn ruleset() -> Vec<linebreaks::Rule> {
             // Text⏎(paranthetical) and more text
             setting: None,
             previous: SP::new(Letter(Anycase), Leave),
-            following: SP::new(Punctuation(P::Parantheses), Leave),
+            following: SP::new(Punctuation(Parantheses), Leave),
             filler: Filler::Space,
         },
         R {
             // Text — paranthetical —⏎and more text
             setting: None,
-            previous: SP::new(Punctuation(P::Dash), Leave),
+            previous: SP::new(Punctuation(Dash), Leave),
             following: SP::new(Letter(Anycase), Leave),
             filler: Filler::Space,
         },
@@ -139,14 +139,14 @@ pub fn ruleset() -> Vec<linebreaks::Rule> {
             // Text⏎— paranthetical — and more text
             setting: None,
             previous: SP::new(Letter(Anycase), Leave),
-            following: SP::new(Punctuation(P::Dash), Leave),
+            following: SP::new(Punctuation(Dash), Leave),
             filler: Filler::Space,
         },
         R {
             // Quote.⏎— Author
             setting: None,
-            previous: SP::new(Punctuation(P::EndOfSentence), Leave),
-            following: SP::new(Punctuation(P::Dash), Remove),
+            previous: SP::new(Punctuation(EndOfSentence), Leave),
+            following: SP::new(Punctuation(Dash), Remove),
             filler: Filler::Exact("\n-".to_string()),
         },
         // Miscellaneous replacements
@@ -154,7 +154,7 @@ pub fn ruleset() -> Vec<linebreaks::Rule> {
         R {
             // Section.⏎•Bulletpoint
             setting: None,
-            previous: SP::new(Punctuation(P::AnyPunctuation), Leave),
+            previous: SP::new(Punctuation(AnyPunctuation), Leave),
             following: SP::new(Exact('•'), Remove),
             filler: Filler::Exact("\n-".to_string()),
         },

@@ -1,7 +1,4 @@
-use eframe::egui::style::Spacing;
-
 use crate::defaults;
-use crate::settings;
 
 pub enum Case {
     Lowercase,
