@@ -1,4 +1,5 @@
 use crate::defaults;
+use crate::headers;
 use crate::linebreaks;
 use crate::settings;
 
