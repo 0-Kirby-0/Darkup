@@ -1,4 +1,5 @@
 use crate::defaults;
+use crate::headers;
 use crate::linebreaks;
 use crate::settings;
 
@@ -16,35 +17,13 @@ impl Default for Textfixer {
 }
 
 impl Textfixer {
-    fn apply_linebreaks(&self, lines: &[String]) -> String {
-        let mut line_iter = lines.iter();
-        let Some(mut outstring) = line_iter.next().cloned() else {
-            return String::default(); //input was empty
-        };
-
-        for line in line_iter {
-            let previous_char = outstring
-                .chars()
-                .last()
-                .expect("Outstring was empty when getting previous char.");
-            let Some(following_char) = line.chars().next() else {
-                outstring += "\n"; //line is empty, add its linebreak and move on
-                continue;
-            };
-
-            if let Some(rule) = self
-                .ruleset
-                .iter()
-                .find(|r| r.matches(previous_char, following_char))
-            {
-                outstring = rule.merge(outstring, line); //apply matching rule
-            } else {
-                outstring = outstring + "\n" + &line; //no rule applies, add the linebreak and move on
-                continue;
-            };
-        }
-
-        outstring
+    pub fn fix(&self, instring: &str) -> String {
+        let mut lines = instring
+            .lines()
+            .map(|l| l.trim().to_owned())
+            .collect::<Vec<_>>();
+        lines = headers::apply(&lines, &self.settings);
+        linebreaks::apply(&lines, &self.ruleset, &self.settings)
     }
 }
 
@@ -86,7 +65,28 @@ tent mixture.";
             .lines()
             .map(|s| s.to_owned())
             .collect::<Vec<String>>();
-        let fixed = textfixer.apply_linebreaks(&lines);
+        let fixed = linebreaks::apply(&lines, &textfixer.ruleset, &textfixer.settings);
+        eprintln!("'{fixed}'");
+    }
+    #[test]
+    fn headers() {
+        let textfixer = Textfixer::default();
+        let teststr = r"Dux Bellorum
+(Camarilla; 4-point Title)
+When the Camarilla mobilizes its members as
+a war-force, it often selects a Dux Bellorum from
+among the ranks of the Archons, Justicars, or even
+extremely competent Alastors. The Dux Bellorum is
+a battle marshal, the master of a Camarilla combat
+engagement. He may be a front-line warlord, leading
+a bloody charge into a Sabbat domain, or he may be
+a scheming tactician, organizing guerilla strikes to de-
+stabilize an enemy territory from within.";
+        let lines = teststr
+            .lines()
+            .map(|s| s.to_owned())
+            .collect::<Vec<String>>();
+        let fixed = headers::apply(&lines, &textfixer.settings).join("\n");
         eprintln!("'{fixed}'");
     }
 }

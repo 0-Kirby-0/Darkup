@@ -1,6 +1,6 @@
-use crate::{linebreaks, settings};
+use crate::{linebreaks, settings, texthelpers};
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum SettingType {
     SmartHyphenRemoval,
     MarkdownSectionHeadings,
@@ -48,15 +48,15 @@ pub fn setting_list() -> settings::SettingList<SettingType> {
 }
 
 pub fn ruleset() -> Vec<linebreaks::Rule> {
-    use linebreaks as LB;
+    use linebreaks::Rule as R;
+    use texthelpers as TH;
     use SettingType as S;
-    use LB::Action::*;
-    use LB::Case::*;
-    use LB::Filler;
-    use LB::Match::*;
-    use LB::PunctuationKind::*;
-    use LB::Rule as R;
-    use LB::SymbolPredicate as SP;
+    use TH::Action::*;
+    use TH::Case::*;
+    use TH::Filler;
+    use TH::Match::*;
+    use TH::PunctuationKind::*;
+    use TH::SymbolPredicate as SP;
 
     vec![
         // Taking care of the most common and obvious spurious linebreaks.

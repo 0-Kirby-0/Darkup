@@ -23,7 +23,6 @@ where
     }
 }
 
-
 pub struct SettingList<SettingType> {
     pub list: Vec<Setting<SettingType>>,
 }
@@ -32,8 +31,12 @@ impl<SettingType> SettingList<SettingType>
 where
     SettingType: PartialEq,
 {
-    pub fn check(&self, kind: SettingType) -> Option<bool> {
-        self.list.iter().find(|s| s.kind == kind).map(|s| s.enabled)
+    pub fn check(&self, kind: SettingType) -> bool {
+        self.list
+            .iter()
+            .find(|s| s.kind == kind)
+            .map(|s| s.enabled)
+            .expect("Setting type without matching setting.")
     }
 
     pub fn egui_render(&mut self, ui: &mut eframe::egui::Ui) -> SettingUpdated {

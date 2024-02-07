@@ -4,6 +4,8 @@ fn main() {
 }
 
 mod defaults;
+mod headers;
 mod linebreaks;
 mod settings;
 mod textfixer;
+mod texthelpers;

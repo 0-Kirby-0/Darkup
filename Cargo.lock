@@ -835,6 +835,7 @@ name = "darkup"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "diacritics",
  "eframe",
 ]
 
@@ -848,6 +849,12 @@ dependencies = [
  "quote",
  "syn 1.0.109",
 ]
+
+[[package]]
+name = "diacritics"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fec6444e5b31ce44f10cd5e51dee3923970ec090b39f7a806fbe57ef4c89c7e2"
 
 [[package]]
 name = "digest"

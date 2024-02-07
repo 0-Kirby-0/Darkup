@@ -1,93 +1,5 @@
-use crate::defaults;
-
-pub enum Case {
-    Lowercase,
-    Uppercase,
-    Anycase,
-}
-
-pub enum PunctuationKind {
-    AnyPunctuation,
-    EndOfSentence,
-    Continuation,
-    Parantheses,
-    Hyphen,
-    Dash,
-    Slash,
-}
-
-pub enum Match {
-    Anymatch,
-    Exact(char),
-    Letter(Case),
-    Whitespace,
-    Linebreak,
-    Punctuation(PunctuationKind),
-}
-
-impl Match {
-    fn matches(&self, candidate: char) -> bool {
-        use Case as C;
-        use Match as M;
-        use PunctuationKind as P;
-        match self {
-            M::Anymatch => true,
-            M::Exact(exact) => candidate == *exact,
-            M::Letter(case) => match case {
-                C::Uppercase => candidate.is_uppercase(),
-                C::Lowercase => candidate.is_lowercase(),
-                C::Anycase => candidate.is_alphabetic(),
-            },
-            M::Whitespace => candidate.is_whitespace(),
-            M::Linebreak => candidate == '\n',
-            M::Punctuation(punctuation) => match punctuation {
-                P::AnyPunctuation => candidate.is_ascii_punctuation(),
-                P::EndOfSentence => matches!(candidate, '.' | '!' | '?'),
-                P::Continuation => matches!(candidate, ',' | ':' | ';'),
-                P::Parantheses => matches!(candidate, '(' | ')' | '[' | ']'),
-                P::Hyphen => candidate == '-',
-                P::Dash => candidate == '—',
-                P::Slash => candidate == '/',
-            },
-        }
-    }
-}
-
-#[derive(PartialEq)]
-pub enum Action {
-    Remove,
-    Leave,
-}
-
-pub struct SymbolPredicate {
-    pub symbol: Match,
-    pub on_match: Action,
-}
-
-impl SymbolPredicate {
-    pub fn new(symbol: Match, on_match: Action) -> Self {
-        Self { symbol, on_match }
-    }
-}
-
-pub enum Filler {
-    None,
-    Space,
-    Linebreak,
-    Exact(String),
-}
-
-impl Filler {
-    fn get(&self) -> &str {
-        use Filler as F;
-        match self {
-            F::None => "",
-            F::Space => " ",
-            F::Linebreak => "\n",
-            F::Exact(filler) => filler,
-        }
-    }
-}
+use crate::texthelpers::*;
+use crate::{defaults, settings};
 
 pub struct Rule {
     pub setting: Option<(defaults::SettingType, bool)>,
@@ -97,10 +9,10 @@ pub struct Rule {
 }
 
 impl Rule {
-    pub fn matches(&self, previous: char, following: char) -> bool {
+    fn matches(&self, previous: char, following: char) -> bool {
         self.previous.symbol.matches(previous) && self.following.symbol.matches(following)
     }
-    pub fn merge(&self, mut left: String, mut right: &str) -> String {
+    fn merge(&self, mut left: String, mut right: &str) -> String {
         if self.previous.on_match == Action::Remove {
             left.pop();
         }
@@ -110,4 +22,46 @@ impl Rule {
 
         left + self.filler.get() + right
     }
+    fn is_enabled(&self, settings: &settings::SettingList<defaults::SettingType>) -> bool {
+        if let Some((setting, enabled)) = self.setting {
+            settings.check(setting) == enabled
+        } else {
+            true //has no associated setting, so is always enabled
+        }
+    }
+}
+
+pub fn apply(
+    lines: &[String],
+    ruleset: &[Rule],
+    settings: &settings::SettingList<defaults::SettingType>,
+) -> String {
+    let mut line_iter = lines.iter();
+    let Some(mut outstring) = line_iter.next().cloned() else {
+        return String::default(); //input was empty
+    };
+
+    for line in line_iter {
+        let previous_char = outstring
+            .chars()
+            .last()
+            .expect("Outstring was empty when getting previous char.");
+        let Some(following_char) = line.chars().next() else {
+            outstring += "\n"; //line is empty, add its linebreak and move on
+            continue;
+        };
+
+        if let Some(rule) = ruleset
+            .iter()
+            .find(|r| r.matches(previous_char, following_char) && r.is_enabled(settings))
+        {
+            outstring = rule.merge(outstring, line); //apply the matching rule
+            continue;
+        } else {
+            outstring = outstring + "\n" + &line; //no rule applies, add the linebreak and move on
+            continue;
+        };
+    }
+
+    outstring
 }
