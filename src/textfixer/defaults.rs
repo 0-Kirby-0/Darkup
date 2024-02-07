@@ -1,4 +1,4 @@
-use crate::{linebreaks, settings, texthelpers};
+use crate::textfixer::{linebreaks, settings, texthelpers};
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum SettingType {

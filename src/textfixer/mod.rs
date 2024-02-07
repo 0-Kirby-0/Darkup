@@ -1,15 +1,20 @@
-use crate::defaults;
-use crate::headers;
-use crate::linebreaks;
-use crate::settings;
+mod defaults;
+mod headers;
+mod linebreaks;
+mod settings;
+mod texthelpers;
 
 pub struct Textfixer {
+    instring: String,
+    outstring: String,
     ruleset: Vec<linebreaks::Rule>,
-    pub settings: settings::SettingList<defaults::SettingType>,
+    settings: settings::SettingList<defaults::SettingType>,
 }
 impl Default for Textfixer {
     fn default() -> Self {
         Self {
+            instring: String::default(),
+            outstring: String::default(),
             ruleset: defaults::ruleset(),
             settings: defaults::setting_list(),
         }
@@ -17,30 +22,29 @@ impl Default for Textfixer {
 }
 
 impl Textfixer {
-    pub fn fix(&self, instring: &str) -> String {
-        let mut lines = instring
+    pub fn set_string(&mut self, instring: &str) {
+        self.instring = instring.to_owned();
+        self.fix();
+    }
+    pub fn get_string(&self) -> &str {
+        &self.outstring
+    }
+    fn fix(&mut self) {
+        let mut lines = self
+            .instring
             .lines()
             .map(|l| l.trim().to_owned())
             .collect::<Vec<_>>();
         lines = headers::apply(&lines, &self.settings);
-        linebreaks::apply(&lines, &self.ruleset, &self.settings)
+        self.outstring = linebreaks::apply(&lines, &self.ruleset, &self.settings);
+    }
+    pub fn egui_render_settings(&mut self, ui: &mut eframe::egui::Ui) {
+        let updated = self.settings.egui_render(ui);
+        if updated == settings::SettingUpdated::Updated {
+            self.fix();
+        }
     }
 }
-
-/*TODO!
-
-fn fix(&self, instring) -> String {
-    mark_tables();
-    mark_headings();
-    apply_linebreak_rules();
-
-    outstring
-}
-
-fn mark_tables()
-fn mark_headings()
-fn apply_linebreak_rules()
- */
 
 #[cfg(test)]
 mod tests {

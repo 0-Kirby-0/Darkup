@@ -1,5 +1,5 @@
-use crate::texthelpers::*;
-use crate::{defaults, settings};
+use super::texthelpers::*;
+use super::{defaults, settings};
 
 pub struct Rule {
     pub setting: Option<(defaults::SettingType, bool)>,

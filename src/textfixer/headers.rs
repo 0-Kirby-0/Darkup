@@ -1,5 +1,4 @@
-use crate::defaults;
-use crate::settings;
+use super::{defaults, settings};
 
 pub fn apply(
     lines: &[String],
