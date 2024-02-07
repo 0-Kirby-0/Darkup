@@ -48,15 +48,6 @@ impl Textfixer {
     }
 }
 
-fn get_count_item(s: &str) -> (u64, &str) {
-    let mut it = s.split(' ');
-    let (Some(count_str), Some(item)) = (it.next(), it.next()) else {
-        panic!("Can't segment count item pair: '{s}'");
-    };
-
-    (1, item)
-}
-
 /*TODO!
 
 fn fix(&self, instring) -> String {
@@ -71,3 +62,31 @@ fn mark_tables()
 fn mark_headings()
 fn apply_linebreak_rules()
  */
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn linebreaks() {
+        let textfixer = Textfixer::default();
+        let teststr = r"Too often, reckless neonates and ancillae dismiss
+elders as hoary old bats, unable to work technology
+and fearful of the very concept. While it’s certainly
+true that elders either eschew technology themselves
+or look down their nose at it in others, only the most
+foolish young vampire discounts the ability of elders
+to actually learn to take advantage of technology. In
+fact, keeping oneself updated is one of the most fear-
+some tactics in an elder’s arsenal: Given that many
+elders cultivate Resources and other Backgrounds to
+levels unattainable by fledglings, combining these ad-
+vantages with modern advancements makes for a po-
+tent mixture.";
+        let lines = teststr
+            .lines()
+            .map(|s| s.to_owned())
+            .collect::<Vec<String>>();
+        let fixed = textfixer.apply_linebreaks(&lines);
+        eprintln!("'{fixed}'");
+    }
+}

@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.79"
-color-eyre = "0.6.2"
 eframe = "0.26.0"
 
 [lints.rust]
