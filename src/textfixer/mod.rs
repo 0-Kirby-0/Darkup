@@ -35,7 +35,7 @@ impl Textfixer {
             .lines()
             .map(|l| l.trim().to_owned())
             .collect::<Vec<_>>();
-        lines = headers::apply(&lines, &self.settings);
+        lines = headers::apply(lines, &self.settings);
         self.outstring = linebreaks::apply(&lines, &self.ruleset, &self.settings);
     }
     pub fn egui_render_settings(&mut self, ui: &mut eframe::egui::Ui) {
@@ -75,22 +75,13 @@ tent mixture.";
     #[test]
     fn headers() {
         let textfixer = Textfixer::default();
-        let teststr = r"Dux Bellorum
-(Camarilla; 4-point Title)
-When the Camarilla mobilizes its members as
-a war-force, it often selects a Dux Bellorum from
-among the ranks of the Archons, Justicars, or even
-extremely competent Alastors. The Dux Bellorum is
-a battle marshal, the master of a Camarilla combat
-engagement. He may be a front-line warlord, leading
-a bloody charge into a Sabbat domain, or he may be
-a scheming tactician, organizing guerilla strikes to de-
-stabilize an enemy territory from within.";
+        let teststr = r"Definitely a Heading (With a subheading)
+Followed: By a subheading or something.";
         let lines = teststr
             .lines()
             .map(|s| s.to_owned())
             .collect::<Vec<String>>();
-        let fixed = headers::apply(&lines, &textfixer.settings).join("\n");
+        let fixed = headers::apply(lines, &textfixer.settings).join("\n");
         eprintln!("'{fixed}'");
     }
 }
