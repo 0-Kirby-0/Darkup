@@ -29,7 +29,7 @@ impl Textfixer {
     pub fn get_string(&self) -> &str {
         &self.outstring
     }
-    fn fix(&mut self) {
+    pub fn fix(&mut self) {
         let mut lines = self
             .instring
             .lines()
